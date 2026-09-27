@@ -1,0 +1,645 @@
+
+
+<div class="brand">yarike.com</div>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>پنل امروز — آشپزخانه و مدیریت</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --saffron:#C6902E; --saffron-dim:#A97A24; --herb:#5F7047; --herb-dim:#4C5A38; --brick:#A8432F;
+    --text:#241E14; --text-dim:#8C8060; --line:#E4DAC4; --card:#FFFFFF; --bg:#F6F1E4;
+    --on-saffron:#FFFBF2; --off:#D6CBAE;
+    --pad: clamp(14px, 3.5vw, 32px);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  button, input{ font-family:inherit; }
+  button{ cursor:pointer; }
+  button:active{ transform:scale(.97); }
+  html,body{height:100%;}
+  body{
+    font-family:'Vazirmatn', sans-serif; background:var(--bg); color:var(--text);
+    min-height:100dvh; display:flex; flex-direction:column;
+  }
+ 
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:10;
+    background:rgba(246,241,228,.92); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    padding:max(env(safe-area-inset-top),16px) var(--pad) 14px;
+  }
+  .head-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px; }
+  .head-top h1{ font-size:clamp(17px,2.6vw,20px); font-weight:800; }
+  .head-top .sub{ font-size:12.5px; color:var(--text-dim); margin-top:2px; }
+  .live-dot{ display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:var(--herb); }
+  .live-dot::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--herb); box-shadow:0 0 0 3px rgba(95,112,71,.2); }
+  .print-btn{
+    flex-shrink:0; width:38px; height:38px; border-radius:11px; border:1px solid var(--line);
+    background:var(--card); font-size:15px; display:flex; align-items:center; justify-content:center;
+    transition:border-color .15s;
+  }
+ 
+  .daypart-rail{ display:flex; gap:8px; overflow-x:auto; }
+  .daypart-rail::-webkit-scrollbar{display:none;}
+  .dp-pill{
+    flex-shrink:0; padding:8px 15px; border-radius:100px; font-size:13px; font-weight:600;
+    background:var(--card); color:var(--text-dim); border:1px solid var(--line); white-space:nowrap;
+    transition:background .15s, color .15s, border-color .15s;
+  }
+  .dp-pill.active{ background:var(--herb); color:#fff; border-color:var(--herb); }
+ 
+  /* ---------- layout ---------- */
+  .layout{ flex:1; display:flex; flex-direction:column-reverse; }
+  main{ flex:1; padding:18px var(--pad) 28px; }
+  aside{ padding:0 var(--pad) 18px; }
+ 
+  .list-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .section-title{ font-size:13.5px; font-weight:700; color:var(--text-dim); }
+  .add-btn{
+    display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; color:var(--on-saffron);
+    background:var(--saffron); border:none; border-radius:100px; padding:8px 14px; transition:background .15s;
+  }
+  .add-btn:hover{ background:var(--saffron-dim); }
+  .add-btn.is-open{ background:var(--card); color:var(--text-dim); border:1px solid var(--line); }
+  .product-list{ display:flex; flex-direction:column; gap:10px; }
+ 
+  /* ---------- add-food form ---------- */
+  .add-form{
+    background:var(--card); border:1px solid var(--saffron-dim); border-radius:16px; padding:16px;
+    margin-bottom:12px; display:none; animation:pop .2s ease;
+  }
+  .add-form.open{ display:block; }
+  .add-form .af-title{ font-size:13.5px; font-weight:700; margin-bottom:12px; }
+  .af-row{ display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .af-field{ display:flex; flex-direction:column; gap:5px; flex:1 1 140px; min-width:0; }
+  .af-field.narrow{ flex:0 1 110px; }
+  .af-field label{ font-size:11px; font-weight:700; color:var(--text-dim); }
+  .af-field input, .af-field select{
+    font-size:13px; padding:9px 11px; border-radius:9px; border:1px solid var(--line); background:var(--bg); color:var(--text); width:100%;
+  }
+  .af-field input:focus, .af-field select:focus{ outline:none; border-color:var(--saffron); box-shadow:0 0 0 3px rgba(198,144,46,.14); }
+  .chip-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  .chip{
+    font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:100px; border:1px solid var(--line);
+    background:var(--bg); color:var(--text-dim); transition:background .15s, color .15s, border-color .15s;
+  }
+  .chip.selected{ background:var(--herb); color:#fff; border-color:var(--herb); }
+  .emoji-preview-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .emoji-preview{
+    width:40px; height:40px; border-radius:11px; background:var(--bg); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0;
+  }
+  .emoji-grid{ display:flex; flex-wrap:wrap; gap:5px; max-height:96px; overflow-y:auto; padding:2px; }
+  .emoji-opt{
+    width:32px; height:32px; border-radius:9px; border:1px solid transparent; background:var(--bg);
+    font-size:16px; display:flex; align-items:center; justify-content:center; transition:border-color .15s, background .15s;
+  }
+  .emoji-opt.selected{ border-color:var(--saffron); background:#FBF3E3; }
+  .af-actions{ display:flex; gap:8px; margin-top:12px; }
+  .af-submit{
+    flex:1; background:var(--saffron); color:var(--on-saffron); border:none; border-radius:10px; padding:10px; font-size:13px; font-weight:700;
+  }
+  .af-cancel{
+    background:var(--card); border:1px solid var(--line); color:var(--text-dim); border-radius:10px; padding:10px 16px; font-size:13px; font-weight:700;
+  }
+ 
+  .del-btn{
+    flex-shrink:0; width:32px; height:32px; border-radius:9px; border:1px solid var(--line); background:var(--card);
+    font-size:13px; color:var(--text-dim); transition:background .15s, color .15s, border-color .15s, width .15s;
+  }
+  .del-btn.armed{ background:var(--brick); border-color:var(--brick); color:#fff; width:auto; padding:0 10px; font-size:11.5px; font-weight:700; white-space:nowrap; }
+ 
+  /* ---------- product card ---------- */
+  .p-card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px;
+    transition:opacity .2s, border-color .2s;
+  }
+  .p-card.unavailable{ opacity:.55; }
+  .p-row1{ display:flex; align-items:center; gap:12px; }
+  .p-thumb{
+    width:46px; height:46px; border-radius:12px; background:linear-gradient(135deg,#EFE6CE,#F8F3E4);
+    display:flex; align-items:center; justify-content:center; font-size:21px; flex-shrink:0;
+  }
+  .p-info{ flex:1; min-width:0; }
+  .p-name{ font-size:14.5px; font-weight:700; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .p-cat{ font-size:10.5px; color:var(--text-dim); font-weight:600; background:var(--bg); border-radius:100px; padding:2px 8px; }
+  .p-price-line{ font-size:12.5px; margin-top:3px; }
+  .p-price-line .old{ color:var(--text-dim); text-decoration:line-through; margin-left:6px; }
+  .p-price-line .now{ color:var(--saffron-dim); font-weight:700; }
+  .p-price-line .discount-tag{ color:var(--brick); font-weight:700; margin-right:6px; }
+ 
+  /* toggle switch */
+  .switch{ flex-shrink:0; width:46px; height:27px; border-radius:100px; background:var(--off); position:relative; transition:background .2s; border:none; }
+  .switch::after{ content:''; position:absolute; top:3px; right:3px; width:21px; height:21px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:right .2s; }
+  .switch.on{ background:var(--herb); }
+  .switch.on::after{ right:22px; }
+ 
+  .p-row2{ display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap; }
+  .stock-box{ display:flex; align-items:center; gap:8px; background:var(--bg); border:1px solid var(--line); border-radius:100px; padding:5px 6px 5px 12px; }
+  .stock-box .stock-label{ font-size:11px; color:var(--text-dim); font-weight:600; }
+  .stock-box .stock-num{ font-size:13px; font-weight:800; min-width:16px; text-align:center; }
+  .stock-box button{ width:24px; height:24px; border-radius:50%; border:none; background:var(--card); font-size:14px; line-height:1; }
+  .order-btn{
+    font-size:11.5px; font-weight:700; color:var(--brick); background:#F6E9E4; border:1px solid #E9C9BC;
+    border-radius:100px; padding:6px 12px;
+  }
+  .unlimited-tag{ font-size:11px; color:var(--text-dim); font-weight:600; }
+ 
+  .price-edit{ display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .price-edit label{ font-size:11px; color:var(--text-dim); font-weight:600; }
+  .price-edit input[type=number]{
+    width:92px; font-size:12.5px; padding:7px 9px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--text);
+  }
+  .price-edit input:focus{ outline:none; border-color:var(--saffron); box-shadow:0 0 0 3px rgba(198,144,46,.14); }
+  .discount-toggle{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text-dim); font-weight:600; }
+  .discount-toggle input{ accent-color:var(--saffron); }
+ 
+  /* ---------- agent preview panel ---------- */
+  .agent-panel{
+    background:#20261A; color:#F3F1E6; border-radius:20px; padding:18px;
+  }
+  .agent-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .agent-avatar{
+    width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--saffron),var(--brick));
+    display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;
+  }
+  .agent-head h2{ font-size:14.5px; font-weight:700; }
+  .agent-head .sub{ font-size:11px; color:#B9C2A6; }
+  .agent-block{ margin-bottom:14px; }
+  .agent-block .lbl{ font-size:11.5px; color:#B9C2A6; font-weight:700; margin-bottom:8px; }
+  .agent-item{ display:flex; justify-content:space-between; gap:8px; font-size:12.5px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.08); }
+  .agent-item:last-child{ border-bottom:none; }
+  .agent-item .nm{ display:flex; align-items:center; gap:6px; }
+  .agent-item .pc{ color:#E7C77C; font-weight:700; white-space:nowrap; }
+  .agent-item .pc .old{ color:#8B917C; text-decoration:line-through; margin-left:5px; font-weight:500; }
+  .agent-empty{ font-size:12px; color:#8B917C; }
+  .agent-bubble{
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:14px;
+    padding:11px 13px; font-size:12.5px; line-height:1.8; animation:pop .25s ease;
+  }
+  @keyframes pop{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+  .agent-bubble b{ color:#E7C77C; }
+ 
+  .flow-note{
+    margin-top:16px; padding-top:14px; border-top:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; gap:6px; font-size:11px; color:var(--text-dim); flex-wrap:wrap;
+  }
+  .flow-note .node{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:5px 10px; font-weight:700; }
+  .flow-note .arrow{ color:var(--text-dim); }
+ 
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(16px);
+    background:var(--text); color:var(--bg); font-size:12.5px; font-weight:600;
+    padding:10px 18px; border-radius:100px; opacity:0; pointer-events:none;
+    transition:opacity .22s, transform .22s; z-index:50; white-space:nowrap; max-width:90vw; text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+ 
+  /* ---------- laptop / wide layout ---------- */
+  @media (min-width: 900px){
+    .layout{ flex-direction:row; align-items:flex-start; max-width:1180px; margin:0 auto; width:100%; }
+    main{ flex:1.5; }
+    aside{ flex:1; position:sticky; top:132px; padding-top:18px; max-width:380px; }
+  }
+ 
+  @media print{
+    header, aside, .no-print{ display:none !important; }
+    body{ background:#fff; }
+    .p-card{ break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+ 
+<header>
+  <div class="head-top">
+    <div>
+      <h1>پنل امروز</h1>
+      <div class="sub">موجودی، قیمت و منوی فعال — همون‌چیزی که Agent می‌بینه</div>
+    </div>
+    <button class="print-btn no-print" onclick="window.print()" title="چاپ منوی امروز">🖨️</button>
+  </div>
+  <div class="daypart-rail" id="daypartRail">
+    <button class="dp-pill active" data-dp="all">همه‌ی روز</button>
+    <button class="dp-pill" data-dp="breakfast">صبحانه</button>
+    <button class="dp-pill" data-dp="lunch">ناهار</button>
+    <button class="dp-pill" data-dp="dinner">شام</button>
+  </div>
+</header>
+ 
+<div class="layout">
+  <main>
+    <div class="list-head">
+      <div class="section-title" id="listCount"></div>
+      <button class="add-btn" id="addToggleBtn">＋ افزودن غذای جدید</button>
+    </div>
+ 
+    <div class="add-form" id="addForm">
+      <div class="af-title">غذای جدید به منو</div>
+ 
+      <div class="emoji-preview-row">
+        <div class="emoji-preview" id="afEmojiPreview">🍽️</div>
+        <div class="af-field" style="flex:1;">
+          <label>نام غذا</label>
+          <input type="text" id="afName" placeholder="مثلاً پیتزا سیر">
+        </div>
+      </div>
+ 
+      <div class="af-field" style="margin-bottom:10px;">
+        <label>ایموجی / استیکر</label>
+        <div class="emoji-grid" id="afEmojiGrid"></div>
+      </div>
+ 
+      <div class="af-row">
+        <div class="af-field">
+          <label>دسته</label>
+          <input type="text" id="afCat" placeholder="مثلاً پیتزا">
+        </div>
+        <div class="af-field narrow">
+          <label>قیمت (تومان)</label>
+          <input type="number" step="1000" id="afPrice" placeholder="250000">
+        </div>
+      </div>
+ 
+      <div class="af-field" style="margin-bottom:10px;">
+        <label>زمان سرو</label>
+        <div class="chip-row" id="afDaypartChips">
+          <button type="button" class="chip selected" data-chip="all">همه‌ی روز</button>
+          <button type="button" class="chip" data-chip="breakfast">صبحانه</button>
+          <button type="button" class="chip" data-chip="lunch">ناهار</button>
+          <button type="button" class="chip" data-chip="dinner">شام</button>
+        </div>
+      </div>
+ 
+      <div class="af-row" style="align-items:center;">
+        <label class="discount-toggle" style="flex:0 0 auto;">
+          <input type="checkbox" id="afTrackStock">
+          ردیابی موجودی
+        </label>
+        <div class="af-field narrow" id="afStockField" style="display:none;">
+          <label>موجودی اولیه</label>
+          <input type="number" id="afStock" placeholder="10">
+        </div>
+      </div>
+ 
+      <div class="af-actions">
+        <button class="af-submit" id="afSubmitBtn">افزودن به منو</button>
+        <button class="af-cancel" id="afCancelBtn">انصراف</button>
+      </div>
+    </div>
+ 
+    <div class="product-list" id="productList"></div>
+  </main>
+ 
+  <aside>
+    <div class="agent-panel">
+      <div class="agent-head">
+        <div class="agent-avatar">🤖</div>
+        <div><h2>پاسخیار</h2><div class="sub">پیش‌نمایش زنده — همین الان</div></div>
+      </div>
+ 
+      <div class="agent-block">
+        <div class="lbl">امروز پیشنهاد می‌ده</div>
+        <div id="agentAvailable"></div>
+      </div>
+ 
+      <div class="agent-block" id="agentUnavailableBlock">
+        <div class="lbl">امروز نداره</div>
+        <div id="agentUnavailable"></div>
+      </div>
+ 
+      <div class="agent-block" id="agentEventBlock" style="display:none;">
+        <div class="lbl">آخرین واکنش Agent</div>
+        <div class="agent-bubble" id="agentEvent"></div>
+      </div>
+    </div>
+ 
+    <div class="flow-note no-print">
+      <span class="node">POS</span><span class="arrow">←</span>
+      <span class="node">موجودی</span><span class="arrow">←</span>
+      <span class="node">Agent</span>
+    </div>
+  </aside>
+</div>
+ 
+<div class="toast" id="toast"></div>
+ 
+<script>
+/* ---------- data ---------- */
+let products = [
+  { id:'pep',   name:'پیتزا پپرونی',   emoji:'🍕', cat:'پیتزا',   catKey:'pizza',  basePrice:450000, todayPrice:null, trackStock:true,  stock:8,  available:true,  dayParts:['lunch','dinner'] },
+  { id:'veg',   name:'پیتزا سبزیجات',  emoji:'🍕', cat:'پیتزا',   catKey:'pizza',  basePrice:380000, todayPrice:null, trackStock:true,  stock:6,  available:true,  dayParts:['lunch','dinner'] },
+  { id:'burger',name:'برگر مخصوص',     emoji:'🍔', cat:'برگر',    catKey:'burger', basePrice:320000, todayPrice:null, trackStock:true,  stock:10, available:true,  dayParts:['all'] },
+  { id:'kabab', name:'جوجه کباب',      emoji:'🍢', cat:'کبابی',   catKey:'grill',  basePrice:250000, todayPrice:220000, trackStock:false, stock:null, available:true, dayParts:['lunch','dinner'] },
+  { id:'steak', name:'استیک',          emoji:'🥩', cat:'کبابی',   catKey:'grill',  basePrice:590000, todayPrice:null, trackStock:false, stock:null, available:false, dayParts:['dinner'] },
+  { id:'lasagna',name:'لازانیا',       emoji:'🍝', cat:'پاستا',   catKey:'pasta',  basePrice:410000, todayPrice:null, trackStock:false, stock:null, available:false, dayParts:['lunch','dinner'] },
+  { id:'soda',  name:'نوشابه',         emoji:'🥤', cat:'نوشیدنی', catKey:'drink',  basePrice:40000,  todayPrice:null, trackStock:false, stock:null, available:true,  dayParts:['all'] },
+  { id:'doogh', name:'دوغ خانگی',      emoji:'🍹', cat:'نوشیدنی', catKey:'drink',  basePrice:45000,  todayPrice:null, trackStock:false, stock:null, available:true,  dayParts:['all'] },
+];
+ 
+let currentDaypart = 'all';
+let lastEvent = null;
+let nextId = 1;
+ 
+const EMOJI_OPTIONS = ['🍕','🍔','🌭','🥪','🌮','🌯','🥗','🍝','🍜','🍲','🍛','🍣','🍱','🥘','🍖','🍗','🥩','🍤','🥓','🍳','🧀','🥐','🍞','🥖','🍩','🍪','🍦','🍰','🧁','🥤','🧃','☕','🍵','🍹','🍷','🍺','🥛','🍽️'];
+let afSelectedEmoji = '🍽️';
+let afSelectedDayparts = new Set(['all']);
+ 
+/* ---------- helpers ---------- */
+function fa(n){ const m=['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹']; return String(n).split('').map(d=>m[d]??d).join(''); }
+function money(n){ return fa(Math.round(n).toLocaleString('en-US')) + ' تومان'; }
+function visibleProducts(){
+  return products.filter(p => currentDaypart === 'all' || p.dayParts.includes('all') || p.dayParts.includes(currentDaypart));
+}
+ 
+let toastTimer;
+function showToast(text){
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+ 
+/* ---------- daypart rail ---------- */
+document.querySelectorAll('.dp-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.dp-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    currentDaypart = pill.dataset.dp;
+    renderAll();
+  });
+});
+ 
+/* ---------- product card render ---------- */
+function renderList(){
+  const list = document.getElementById('productList');
+  const items = visibleProducts();
+  document.getElementById('listCount').textContent = `${fa(items.length)} محصول`;
+  list.innerHTML = '';
+ 
+  items.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'p-card' + (p.available ? '' : ' unavailable');
+ 
+    const hasDiscount = p.todayPrice !== null && p.todayPrice !== p.basePrice;
+    const priceLineHtml = hasDiscount
+      ? `<span class="discount-tag">امروز</span><span class="old">${money(p.basePrice)}</span><span class="now">${money(p.todayPrice)}</span>`
+      : `<span class="now">${money(p.basePrice)}</span>`;
+ 
+    card.innerHTML = `
+      <div class="p-row1">
+        <div class="p-thumb">${p.emoji}</div>
+        <div class="p-info">
+          <div class="p-name">${p.name}<span class="p-cat">${p.cat}</span></div>
+          <div class="p-price-line">${priceLineHtml}</div>
+        </div>
+        <button class="switch ${p.available ? 'on' : ''}" data-toggle="${p.id}" title="موجود امروز"></button>
+        <button class="del-btn" data-del="${p.id}" title="حذف از منو">🗑</button>
+      </div>
+      <div class="p-row2">
+        ${p.trackStock ? `
+          <div class="stock-box">
+            <span class="stock-label">موجودی</span>
+            <button data-stock-minus="${p.id}">−</button>
+            <span class="stock-num">${fa(p.stock)}</span>
+            <button data-stock-plus="${p.id}">+</button>
+          </div>
+          <button class="order-btn" data-order="${p.id}">🧾 ثبت سفارش (شبیه‌سازی)</button>
+        ` : `<span class="unlimited-tag">بدون محدودیت موجودی</span>`}
+      </div>
+      <div class="price-edit">
+        <label>قیمت پایه</label>
+        <input type="number" step="1000" value="${p.basePrice}" data-base="${p.id}">
+        <label class="discount-toggle">
+          <input type="checkbox" data-discount-on="${p.id}" ${p.todayPrice !== null ? 'checked' : ''}>
+          تخفیف امروز
+        </label>
+        ${p.todayPrice !== null ? `<input type="number" step="1000" value="${p.todayPrice}" data-today="${p.id}" placeholder="قیمت امروز">` : ''}
+      </div>
+    `;
+    list.appendChild(card);
+  });
+ 
+  attachListEvents();
+}
+ 
+function attachListEvents(){
+  document.querySelectorAll('[data-toggle]').forEach(btn => btn.addEventListener('click', () => {
+    const p = findProduct(btn.dataset.toggle);
+    setAvailable(p, !p.available, true);
+    renderAll();
+  }));
+  document.querySelectorAll('[data-stock-plus]').forEach(btn => btn.addEventListener('click', () => {
+    const p = findProduct(btn.dataset.stockPlus);
+    p.stock += 1;
+    if(p.stock > 0 && !p.available) setAvailable(p, true, false);
+    renderAll();
+  }));
+  document.querySelectorAll('[data-stock-minus]').forEach(btn => btn.addEventListener('click', () => {
+    const p = findProduct(btn.dataset.stockMinus);
+    changeStock(p, -1);
+    renderAll();
+  }));
+  document.querySelectorAll('[data-order]').forEach(btn => btn.addEventListener('click', () => {
+    const p = findProduct(btn.dataset.order);
+    if(!p.available || p.stock <= 0){ showToast('این محصول همین الان موجود نیست'); return; }
+    changeStock(p, -1);
+    showToast(`یک سفارش ${p.name} ثبت شد`);
+    renderAll();
+  }));
+  document.querySelectorAll('[data-base]').forEach(inp => inp.addEventListener('change', () => {
+    const p = findProduct(inp.dataset.base);
+    p.basePrice = Math.max(0, parseInt(inp.value, 10) || 0);
+    renderAll();
+  }));
+  document.querySelectorAll('[data-today]').forEach(inp => inp.addEventListener('change', () => {
+    const p = findProduct(inp.dataset.today);
+    p.todayPrice = Math.max(0, parseInt(inp.value, 10) || 0);
+    renderAll();
+  }));
+  document.querySelectorAll('[data-discount-on]').forEach(chk => chk.addEventListener('change', () => {
+    const p = findProduct(chk.dataset.discountOn);
+    p.todayPrice = chk.checked ? Math.round(p.basePrice * 0.9) : null;
+    renderAll();
+  }));
+  document.querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', () => {
+    if(btn.classList.contains('armed')){
+      const p = findProduct(btn.dataset.del);
+      products = products.filter(x => x.id !== btn.dataset.del);
+      showToast(`${p.name} از منو حذف شد`);
+      renderAll();
+    } else {
+      document.querySelectorAll('.del-btn.armed').forEach(b => { b.classList.remove('armed'); b.textContent = '🗑'; });
+      btn.classList.add('armed');
+      btn.textContent = 'مطمئنی؟ 🗑';
+      clearTimeout(btn._armTimer);
+      btn._armTimer = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = '🗑'; }, 2800);
+    }
+  }));
+}
+ 
+function findProduct(id){ return products.find(p => p.id === id); }
+ 
+function changeStock(p, delta){
+  p.stock = Math.max(0, p.stock + delta);
+  if(p.stock === 0 && p.available){
+    setAvailable(p, false, true);
+  }
+}
+ 
+function setAvailable(p, value, announce){
+  const wasAvailable = p.available;
+  p.available = value;
+  if(announce && wasAvailable && !value){
+    const alt = products.find(o => o.id !== p.id && o.cat === p.cat && o.available);
+    lastEvent = alt
+      ? `<b>${p.name}</b> تمام شده — به مشتری بعدی پیشنهاد می‌دم: <b>${alt.name}</b>`
+      : `<b>${p.name}</b> تمام شده — امروز جایگزین مشابهی توی این دسته نداریم`;
+    showToast(`${p.emoji} ${p.name} ناموجود شد`);
+  }
+}
+ 
+/* ---------- agent preview render ---------- */
+function renderAgent(){
+  const items = visibleProducts();
+  const available = items.filter(p => p.available);
+  const unavailable = items.filter(p => !p.available);
+ 
+  document.getElementById('agentAvailable').innerHTML = available.length
+    ? available.map(p => {
+        const hasDiscount = p.todayPrice !== null && p.todayPrice !== p.basePrice;
+        const priceHtml = hasDiscount
+          ? `<span class="old">${money(p.basePrice)}</span>${money(p.todayPrice)}`
+          : money(p.basePrice);
+        return `<div class="agent-item"><span class="nm">${p.emoji} ${p.name}</span><span class="pc">${priceHtml}</span></div>`;
+      }).join('')
+    : `<div class="agent-empty">فعلاً چیزی برای پیشنهاد نداره</div>`;
+ 
+  const uBlock = document.getElementById('agentUnavailableBlock');
+  if(unavailable.length){
+    uBlock.style.display = '';
+    document.getElementById('agentUnavailable').innerHTML = unavailable.map(p =>
+      `<div class="agent-item"><span class="nm">${p.emoji} ${p.name}</span><span class="pc" style="color:#8B917C;">ناموجود</span></div>`
+    ).join('');
+  } else {
+    uBlock.style.display = 'none';
+  }
+ 
+  const eventBlock = document.getElementById('agentEventBlock');
+  if(lastEvent){
+    eventBlock.style.display = '';
+    document.getElementById('agentEvent').innerHTML = lastEvent;
+  } else {
+    eventBlock.style.display = 'none';
+  }
+}
+ 
+function renderAll(){
+  renderList();
+  renderAgent();
+}
+ 
+/* ---------- add-food form ---------- */
+const addForm = document.getElementById('addForm');
+const addToggleBtn = document.getElementById('addToggleBtn');
+ 
+function renderEmojiGrid(){
+  const grid = document.getElementById('afEmojiGrid');
+  grid.innerHTML = EMOJI_OPTIONS.map(e =>
+    `<button type="button" class="emoji-opt${e === afSelectedEmoji ? ' selected' : ''}" data-emoji="${e}">${e}</button>`
+  ).join('');
+  grid.querySelectorAll('[data-emoji]').forEach(btn => btn.addEventListener('click', () => {
+    afSelectedEmoji = btn.dataset.emoji;
+    document.getElementById('afEmojiPreview').textContent = afSelectedEmoji;
+    grid.querySelectorAll('.emoji-opt').forEach(b => b.classList.toggle('selected', b.dataset.emoji === afSelectedEmoji));
+  }));
+}
+ 
+function resetAddForm(){
+  document.getElementById('afName').value = '';
+  document.getElementById('afCat').value = '';
+  document.getElementById('afPrice').value = '';
+  document.getElementById('afTrackStock').checked = false;
+  document.getElementById('afStock').value = '';
+  document.getElementById('afStockField').style.display = 'none';
+  afSelectedEmoji = '🍽️';
+  document.getElementById('afEmojiPreview').textContent = afSelectedEmoji;
+  afSelectedDayparts = new Set(['all']);
+  document.querySelectorAll('#afDaypartChips .chip').forEach(c => c.classList.toggle('selected', c.dataset.chip === 'all'));
+  renderEmojiGrid();
+}
+ 
+addToggleBtn.addEventListener('click', () => {
+  const willOpen = !addForm.classList.contains('open');
+  addForm.classList.toggle('open', willOpen);
+  addToggleBtn.classList.toggle('is-open', willOpen);
+  addToggleBtn.textContent = willOpen ? '✕ بستن فرم' : '＋ افزودن غذای جدید';
+  if(willOpen){ resetAddForm(); document.getElementById('afName').focus(); }
+});
+ 
+document.getElementById('afCancelBtn').addEventListener('click', () => addToggleBtn.click());
+ 
+document.getElementById('afName').addEventListener('input', e => {
+  if(!e.target.value.trim()){ document.getElementById('afEmojiPreview').textContent = afSelectedEmoji; }
+});
+ 
+document.getElementById('afTrackStock').addEventListener('change', e => {
+  document.getElementById('afStockField').style.display = e.target.checked ? '' : 'none';
+});
+ 
+document.querySelectorAll('#afDaypartChips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const key = chip.dataset.chip;
+    if(key === 'all'){
+      afSelectedDayparts = new Set(['all']);
+    } else {
+      afSelectedDayparts.delete('all');
+      if(afSelectedDayparts.has(key)) afSelectedDayparts.delete(key); else afSelectedDayparts.add(key);
+      if(afSelectedDayparts.size === 0) afSelectedDayparts = new Set(['all']);
+    }
+    document.querySelectorAll('#afDaypartChips .chip').forEach(c => c.classList.toggle('selected', afSelectedDayparts.has(c.dataset.chip)));
+  });
+});
+ 
+document.getElementById('afSubmitBtn').addEventListener('click', () => {
+  const name = document.getElementById('afName').value.trim();
+  const cat = document.getElementById('afCat').value.trim() || 'سایر';
+  const price = parseInt(document.getElementById('afPrice').value, 10);
+  if(!name){ showToast('اول اسم غذا رو بنویسید'); return; }
+  if(!price || price <= 0){ showToast('قیمت رو درست وارد کنید'); return; }
+ 
+  const trackStock = document.getElementById('afTrackStock').checked;
+  const stockVal = parseInt(document.getElementById('afStock').value, 10);
+  const stock = trackStock ? (isNaN(stockVal) ? 0 : Math.max(0, stockVal)) : null;
+ 
+  const newProduct = {
+    id: 'p' + (nextId++) + '_' + Date.now().toString(36),
+    name, emoji: afSelectedEmoji, cat, catKey: cat,
+    basePrice: price, todayPrice: null,
+    trackStock, stock,
+    available: trackStock ? stock > 0 : true,
+    dayParts: Array.from(afSelectedDayparts)
+  };
+  products.push(newProduct);
+  showToast(`${afSelectedEmoji} ${name} به منو اضافه شد`);
+  addToggleBtn.click();
+  renderAll();
+});
+ 
+renderAll();
+</script>
+ 
+</body>
+</html>
+ 
+
+
+
+
+

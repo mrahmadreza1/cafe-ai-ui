@@ -1,0 +1,763 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ai-cafe-ordering-ui.com — منوی دیجیتال</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#F6F1E4; --card:#FFFFFF; --card-2:#FBF7EC;
+    --saffron:#C6902E; --saffron-dim:#A97A24; --herb:#5F7047; --brick:#A8432F;
+    --text:#241E14; --text-dim:#8C8060; --line:#E4DAC4; --on-saffron:#FFFBF2;
+    --radius:18px; --page:#EDE6D3;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  button{ font-family:inherit; cursor:pointer; }
+  button:active{ transform:scale(.96); }
+  html,body{height:100%;}
+  body{
+    font-family:'Vazirmatn', sans-serif; background:var(--page); color:var(--text);
+    display:flex; justify-content:center; min-height:100dvh; overflow:hidden;
+  }
+  /* full-screen app shell — no phone bezel, no border/shadow frame.
+     Fills the viewport edge-to-edge on mobile; on wide (laptop) screens
+     the column centers at a comfortable reading width so a QR-scanned
+     phone session and a browser tab both feel intentional. */
+  .phone{
+    width:100%; max-width:560px; height:100vh; height:100dvh;
+    background:var(--ink);
+    overflow:hidden; position:relative; display:flex; flex-direction:column;
+  }
+
+  .table-header{
+    padding:calc(env(safe-area-inset-top) + 14px) 18px 10px;
+    display:flex; justify-content:space-between; align-items:flex-start; flex-shrink:0;
+  }
+  .table-header .brand{font-size:13px; color:var(--text-dim); margin-bottom:2px;}
+  .table-header h1{font-size:22px; font-weight:800; letter-spacing:-0.3px;}
+  .table-badge{
+    background:var(--card); border:1px solid var(--line); border-radius:100px;
+    padding:6px 14px; font-size:13px; color:var(--saffron-dim); font-weight:700; white-space:nowrap;
+  }
+
+  .rail{ display:flex; gap:8px; padding:6px 18px 14px; overflow-x:auto; flex-shrink:0; }
+  .rail::-webkit-scrollbar{display:none;}
+  .pill{
+    flex-shrink:0; padding:9px 16px; border-radius:100px; font-size:13.5px; font-weight:600;
+    background:var(--card); color:var(--text-dim); border:1px solid var(--line);
+    white-space:nowrap; transition:background .15s, color .15s, border-color .15s;
+  }
+  .pill.active{ background:var(--saffron); color:var(--on-saffron); border-color:var(--saffron); }
+
+  .menu-scroll{ flex:1; overflow-y:auto; padding:0 18px 100px; }
+  .menu-scroll::-webkit-scrollbar{display:none;}
+  .section-label{ font-size:15px; font-weight:700; color:var(--text); margin:18px 0 10px; }
+  .empty-state{
+    margin-top:24px; text-align:center; color:var(--text-dim); font-size:13px;
+    background:var(--card); border:1px dashed var(--line); border-radius:16px; padding:30px 16px;
+  }
+  .product-card{
+    display:flex; gap:12px; background:var(--card); border-radius:var(--radius); padding:12px;
+    margin-bottom:10px; align-items:center; border:1px solid var(--line);
+    cursor:pointer; transition:transform .1s, box-shadow .15s;
+  }
+  .product-card:active{ transform:scale(.98); }
+  .product-card .thumb{
+    width:64px; height:64px; border-radius:12px; background:linear-gradient(135deg,#EFE6CE,#F8F3E4);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:24px;
+  }
+  .product-card .info{flex:1; min-width:0;}
+  .product-card .name{font-size:15px; font-weight:700; margin-bottom:3px;}
+  .product-card .desc{font-size:12.5px; color:var(--text-dim); line-height:1.5; margin-bottom:6px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .product-card .price{font-size:14px; font-weight:700; color:var(--saffron-dim);}
+  .add-btn{
+    width:34px; height:34px; border-radius:10px; background:var(--saffron); color:var(--on-saffron);
+    font-size:20px; font-weight:700; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; border:none; transition:background .15s;
+  }
+  .add-btn.added{ background:var(--herb); }
+
+  .fabs{ position:absolute; bottom:calc(env(safe-area-inset-bottom) + 16px); left:0; right:0; display:flex; justify-content:center; gap:10px; padding:0 18px; z-index:20; }
+  .fab{
+    height:52px; border-radius:100px; border:none; font-weight:700; font-size:14.5px;
+    display:flex; align-items:center; gap:8px; padding:0 20px; box-shadow:0 8px 20px rgba(40,32,10,.18);
+    transition:transform .1s;
+  }
+  .fab-chat{ background:var(--card); color:var(--text); border:1px solid var(--saffron-dim); flex:1; justify-content:center; }
+  .fab-chat .dot{ width:8px;height:8px;border-radius:50%; background:var(--herb); box-shadow:0 0 0 3px rgba(95,112,71,.2); }
+  .fab-cart{ background:var(--saffron); color:var(--on-saffron); justify-content:center; position:relative; padding:0 22px; }
+  .cart-count{
+    position:absolute; top:-6px; left:-6px; background:var(--brick); color:#fff; font-size:11px; font-weight:700;
+    width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    transition:transform .2s;
+  }
+  .cart-count.bump{ transform:scale(1.35); }
+
+  .drawer{
+    position:absolute; inset:0; background:var(--ink); display:flex; flex-direction:column;
+    transform:translateY(100%); transition:transform .35s cubic-bezier(.4,0,.2,1); z-index:30;
+  }
+  .drawer.open{transform:translateY(0);}
+  .drawer-header{
+    padding:16px 18px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--line); flex-shrink:0; background:var(--card);
+  }
+  .drawer-header .title{display:flex; align-items:center; gap:10px;}
+  .agent-avatar{
+    width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--saffron),var(--brick));
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+  }
+  .drawer-header h2{font-size:15.5px; font-weight:700;}
+  .drawer-header .sub{font-size:11.5px; color:var(--herb); font-weight:600;}
+  .close-btn{ width:32px; height:32px; border-radius:50%; background:var(--ink); border:none; color:var(--text-dim); font-size:16px; }
+
+  .chat-body{ flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+  .msg{ max-width:80%; padding:11px 14px; border-radius:16px; font-size:13.5px; line-height:1.7; }
+  .msg.agent{ background:var(--card); border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:4px; }
+  .msg.user{ background:var(--saffron); color:var(--on-saffron); align-self:flex-end; border-bottom-right-radius:4px; font-weight:600; }
+  .typing{ align-self:flex-start; display:flex; gap:4px; padding:12px 16px; background:var(--card); border:1px solid var(--line); border-radius:16px; }
+  .typing span{ width:6px; height:6px; border-radius:50%; background:var(--text-dim); animation:blink 1.2s infinite; }
+  .typing span:nth-child(2){ animation-delay:.2s; } .typing span:nth-child(3){ animation-delay:.4s; }
+  @keyframes blink{ 0%,80%,100%{opacity:.25;} 40%{opacity:1;} }
+  .tool-card{ align-self:flex-start; max-width:85%; background:#F1F3EA; border:1px solid var(--herb); border-radius:14px; padding:12px 14px; font-size:12.5px; }
+  .tool-card .t-head{ display:flex; align-items:center; gap:6px; color:var(--herb); font-weight:700; margin-bottom:6px; font-size:12px; }
+  .tool-card .t-body{color:#5B5643; line-height:1.6;}
+  .tool-card .t-body b{color:var(--text);}
+  .chat-input-bar{ padding:12px 16px 18px; display:flex; gap:8px; align-items:center; border-top:1px solid var(--line); flex-shrink:0; background:var(--card); }
+  .chat-input{ flex:1; background:var(--ink); border:1px solid var(--line); border-radius:100px; padding:12px 16px; color:var(--text); font-family:inherit; font-size:13.5px; }
+  .chat-input::placeholder{color:var(--text-dim);}
+  .voice-btn, .send-btn{ width:44px; height:44px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:17px; }
+  .voice-btn{background:var(--ink); color:var(--saffron-dim); border:1px solid var(--line); transition:background .15s, color .15s;}
+  .voice-btn.listening{ background:var(--brick); color:#fff; animation:pulse 1s infinite; }
+  @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(168,67,47,.4);} 100%{box-shadow:0 0 0 10px rgba(168,67,47,0);} }
+  .send-btn{background:var(--saffron); color:var(--on-saffron);}
+
+  .cart-body{ flex:1; overflow-y:auto; padding:16px 18px; }
+  .cart-empty{ text-align:center; color:var(--text-dim); font-size:13px; padding:60px 20px; }
+  .cart-item{ display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:center; }
+  .cart-item .thumb{
+    width:52px;height:52px;border-radius:10px; background:linear-gradient(135deg,#EFE6CE,#F8F3E4);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:20px;
+  }
+  .cart-item .info{flex:1; min-width:0;}
+  .cart-item .name{font-size:14px; font-weight:700; margin-bottom:2px;}
+  .cart-item .variant{font-size:11.5px; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .qty-control{ display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:100px; padding:5px 10px; flex-shrink:0; }
+  .qty-control button{ width:22px;height:22px; border-radius:50%; border:none; background:var(--ink); color:var(--text); font-size:14px; line-height:1; }
+  .cart-footer{ padding:16px 18px 20px; border-top:1px solid var(--line); flex-shrink:0; background:var(--card); }
+  .cart-row{ display:flex; justify-content:space-between; font-size:13px; color:var(--text-dim); margin-bottom:6px; }
+  .cart-row.total{ font-size:16px; font-weight:800; color:var(--text); margin-top:8px; }
+  .checkout-btn{
+    width:100%; margin-top:14px; height:52px; border-radius:14px; border:none;
+    background:var(--saffron); color:var(--on-saffron); font-size:15px; font-weight:700;
+  }
+  .checkout-btn:disabled{ background:var(--line); color:var(--text-dim); }
+
+  .detail-body{ flex:1; overflow-y:auto; }
+  .detail-hero{ height:180px; background:linear-gradient(135deg,#EFE6CE,#F8F3E4); display:flex; align-items:center; justify-content:center; font-size:64px; flex-shrink:0; }
+  .detail-content{ padding:18px; }
+  .detail-content .desc{font-size:13px; color:var(--text-dim); line-height:1.7; margin-bottom:18px;}
+  .opt-group{ margin-bottom:18px; }
+  .opt-group .opt-title{ font-size:13.5px; font-weight:700; margin-bottom:10px; }
+  .opt-list{ display:flex; flex-direction:column; gap:8px; }
+  .opt-row{
+    display:flex; align-items:center; justify-content:space-between; width:100%;
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:11px 14px; font-size:13px; cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .opt-row.selected{ border-color:var(--saffron); background:#FBF3E3; }
+  .opt-row .opt-left{ display:flex; align-items:center; gap:10px; }
+  .radio-dot{ width:18px; height:18px; border-radius:50%; border:2px solid var(--line); flex-shrink:0; position:relative; }
+  .opt-row.selected .radio-dot{ border-color:var(--saffron); }
+  .opt-row.selected .radio-dot::after{ content:''; position:absolute; inset:3px; border-radius:50%; background:var(--saffron); }
+  .check-box{ width:18px; height:18px; border-radius:5px; border:2px solid var(--line); flex-shrink:0; position:relative; }
+  .opt-row.selected .check-box{ border-color:var(--herb); background:var(--herb); }
+  .opt-row.selected .check-box::after{ content:'✓'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:700; }
+  .opt-price{ color:var(--text-dim); font-size:12px; }
+  .qty-row{ display:flex; align-items:center; justify-content:space-between; }
+  .qty-row .opt-title{ margin-bottom:0; }
+  .detail-footer{ padding:14px 18px 20px; border-top:1px solid var(--line); background:var(--card); flex-shrink:0; }
+  .add-to-cart-btn{
+    width:100%; height:52px; border-radius:14px; border:none; background:var(--saffron); color:var(--on-saffron);
+    font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:space-between; padding:0 18px;
+  }
+
+  .track-body{ flex:1; overflow-y:auto; padding:22px 20px; }
+  .track-order-id{ font-size:12.5px; color:var(--text-dim); margin-bottom:2px; }
+  .track-eta{ font-size:20px; font-weight:800; margin-bottom:26px; }
+  .timeline{ position:relative; padding-right:6px; }
+  .t-step{ display:flex; gap:14px; position:relative; padding-bottom:30px; }
+  .t-step:last-child{ padding-bottom:0; }
+  .t-step .t-line{ position:absolute; right:11px; top:26px; bottom:0; width:2px; background:var(--line); transition:background .3s; }
+  .t-step:last-child .t-line{display:none;}
+  .t-step.done .t-line{ background:var(--herb); }
+  .t-dot{ width:24px; height:24px; border-radius:50%; background:var(--card); border:2px solid var(--line); flex-shrink:0; z-index:1;
+    display:flex; align-items:center; justify-content:center; font-size:12px; transition:background .3s, border-color .3s; }
+  .t-step.done .t-dot{ background:var(--herb); border-color:var(--herb); color:#fff; }
+  .t-step.active .t-dot{ background:var(--saffron); border-color:var(--saffron); color:var(--on-saffron); box-shadow:0 0 0 5px rgba(198,144,46,.18); }
+  .t-text .t-title{ font-size:14.5px; font-weight:700; margin-bottom:2px; }
+  .t-step:not(.done):not(.active) .t-title{ color:var(--text-dim); font-weight:600;}
+  .t-text .t-time{ font-size:11.5px; color:var(--text-dim); }
+  .track-actions{ display:flex; gap:10px; margin-top:30px; }
+  .track-actions button{
+    flex:1; height:48px; border-radius:12px; font-size:13px; font-weight:700;
+    border:1px solid var(--line); background:var(--card); color:var(--text); transition:background .15s;
+  }
+  .track-actions button.done{ background:var(--herb); color:#fff; border-color:var(--herb); }
+
+  .toast{
+    position:absolute; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--text); color:var(--ink); font-size:12.5px; font-weight:600;
+    padding:10px 18px; border-radius:100px; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;
+    z-index:50; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* smoother pointer-device interactions (laptop/desktop) */
+  @media (hover:hover) and (pointer:fine){
+    .pill:hover{ border-color:var(--saffron-dim); color:var(--text); }
+    .product-card:hover{ border-color:var(--saffron-dim); box-shadow:0 6px 16px rgba(40,32,10,.08); }
+    .add-btn:hover{ background:var(--saffron-dim); }
+    .fab-chat:hover{ border-color:var(--saffron); }
+    .fab-cart:hover{ background:var(--saffron-dim); }
+    .close-btn:hover{ background:var(--line); color:var(--text); }
+    .opt-row:hover{ border-color:var(--saffron-dim); }
+    .checkout-btn:not(:disabled):hover{ background:var(--saffron-dim); }
+    .track-actions button:not(.done):hover{ border-color:var(--saffron-dim); }
+  }
+
+  /* on wide viewports, dim the surrounding page slightly so the app
+     column still reads as the full-screen surface, without adding
+     any border/shadow/radius to the app itself */
+  @media (min-width: 560px){
+    body{ background:var(--page); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="phone">
+    <div class="table-header">
+      <div>
+        <div class="brand">yarike.com</div>
+        <h1>منو</h1>
+      </div>
+      <div class="table-badge">میز ۱۲</div>
+    </div>
+
+    <div class="rail" id="rail">
+      <button class="pill active" data-cat="recommended">پیشنهاد سرآشپز</button>
+      <button class="pill" data-cat="appetizer">پیش‌غذا</button>
+      <button class="pill" data-cat="main">غذای اصلی</button>
+      <button class="pill" data-cat="drink">نوشیدنی</button>
+      <button class="pill" data-cat="dessert">دسر</button>
+    </div>
+
+    <div class="menu-scroll" id="menuScroll">
+      <div class="cat-section" data-cat="recommended">
+        <div class="section-label">پیشنهاد سرآشپز</div>
+        <div class="product-card" data-product="burger">
+          <div class="thumb">🍔</div>
+          <div class="info">
+            <div class="name">برگر بازار</div>
+            <div class="desc">گوشت گوساله، پنیر چدار، سس مخصوص</div>
+            <div class="price">۲۸۵,۰۰۰ تومان</div>
+          </div>
+          <button class="add-btn" data-quick-add="burger">+</button>
+        </div>
+        <div class="product-card" data-product="ghomeh">
+          <div class="thumb">🍲</div>
+          <div class="info">
+            <div class="name">خورش قیمه بادمجان</div>
+            <div class="desc">با برنج ایرانی و سالاد شیرازی</div>
+            <div class="price">۱۹۰,۰۰۰ تومان</div>
+          </div>
+          <button class="add-btn" data-quick-add="ghomeh">+</button>
+        </div>
+      </div>
+
+      <div class="cat-section" data-cat="main" style="display:none;">
+        <div class="section-label">غذای اصلی</div>
+        <div class="product-card" data-product="burger">
+          <div class="thumb">🍔</div>
+          <div class="info">
+            <div class="name">برگر بازار</div>
+            <div class="desc">گوشت گوساله، پنیر چدار، سس مخصوص</div>
+            <div class="price">۲۸۵,۰۰۰ تومان</div>
+          </div>
+          <button class="add-btn" data-quick-add="burger">+</button>
+        </div>
+        <div class="product-card" data-product="ghomeh">
+          <div class="thumb">🍲</div>
+          <div class="info">
+            <div class="name">خورش قیمه بادمجان</div>
+            <div class="desc">با برنج ایرانی و سالاد شیرازی</div>
+            <div class="price">۱۹۰,۰۰۰ تومان</div>
+          </div>
+          <button class="add-btn" data-quick-add="ghomeh">+</button>
+        </div>
+      </div>
+
+      <div class="cat-section" data-cat="drink" style="display:none;">
+        <div class="section-label">نوشیدنی</div>
+        <div class="product-card" data-product="soda">
+          <div class="thumb">🥤</div>
+          <div class="info">
+            <div class="name">نوشابه قوطی</div>
+            <div class="desc">کوکاکولا، فانتا، اسپرایت</div>
+            <div class="price">۳۵,۰۰۰ تومان</div>
+          </div>
+          <button class="add-btn" data-quick-add="soda">+</button>
+        </div>
+        <div class="product-card" data-product="doogh">
+          <div class="thumb">🍹</div>
+          <div class="info">
+            <div class="name">دوغ خانگی</div>
+            <div class="desc">با نعنا و پونه تازه</div>
+            <div class="price">۴۵,۰۰۰ تومان</div>
+          </div>
+          <button class="add-btn" data-quick-add="doogh">+</button>
+        </div>
+      </div>
+
+      <div class="cat-section" data-cat="appetizer" style="display:none;">
+        <div class="empty-state">به‌زودی پیش‌غذا اضافه می‌شود 🌿</div>
+      </div>
+      <div class="cat-section" data-cat="dessert" style="display:none;">
+        <div class="empty-state">به‌زودی دسر اضافه می‌شود 🍮</div>
+      </div>
+    </div>
+
+    <div class="fabs">
+      <button class="fab fab-chat" id="openChat">
+        <span class="dot"></span>
+        از پاسخیار بپرس یا سفارش بده
+      </button>
+      <button class="fab fab-cart" id="openCart">
+        سبد
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+
+    <!-- CHAT DRAWER -->
+    <div class="drawer" id="chatDrawer">
+      <div class="drawer-header">
+        <div class="title">
+          <div class="agent-avatar">🤖</div>
+          <div><h2>پاسخیار</h2><div class="sub">آنلاین</div></div>
+        </div>
+        <button class="close-btn" data-close="chatDrawer">✕</button>
+      </div>
+      <div class="chat-body" id="chatBody">
+        <div class="msg agent">سلام! خوش اومدید 🌿 چی میل دارید امروز؟</div>
+      </div>
+      <div class="chat-input-bar">
+        <button class="voice-btn" id="voiceBtn">🎙️</button>
+        <input class="chat-input" id="chatInput" placeholder="پیام بنویسید...">
+        <button class="send-btn" id="sendBtn">➤</button>
+      </div>
+    </div>
+
+    <!-- CART DRAWER -->
+    <div class="drawer" id="cartDrawer">
+      <div class="drawer-header">
+        <div class="title"><div><h2>سبد خرید</h2><div class="sub" style="color:var(--text-dim); font-weight:500;">میز ۱۲</div></div></div>
+        <button class="close-btn" data-close="cartDrawer">✕</button>
+      </div>
+      <div class="cart-body" id="cartBody"></div>
+      <div class="cart-footer">
+        <div class="cart-row"><span>جمع سفارش</span><span id="cartSubtotal">۰ تومان</span></div>
+        <div class="cart-row"><span>مالیات و خدمات (۱۰٪)</span><span id="cartTax">۰ تومان</span></div>
+        <div class="cart-row total"><span>مجموع</span><span id="cartTotal">۰ تومان</span></div>
+        <button class="checkout-btn" id="checkoutBtn">پرداخت و ثبت سفارش</button>
+      </div>
+    </div>
+
+    <!-- PRODUCT DETAIL DRAWER -->
+    <div class="drawer" id="detailDrawer">
+      <div class="drawer-header">
+        <div class="title"><h2 id="detailName">نام محصول</h2></div>
+        <button class="close-btn" data-close="detailDrawer">✕</button>
+      </div>
+      <div class="detail-body">
+        <div class="detail-hero" id="detailHero">🍔</div>
+        <div class="detail-content">
+          <p class="desc" id="detailDesc"></p>
+          <div class="opt-group">
+            <div class="opt-title">سایز</div>
+            <div class="opt-list" id="variantList"></div>
+          </div>
+          <div class="opt-group">
+            <div class="opt-title">افزودنی‌ها</div>
+            <div class="opt-list" id="optionList"></div>
+          </div>
+          <div class="opt-group">
+            <div class="qty-row">
+              <div class="opt-title">تعداد</div>
+              <div class="qty-control">
+                <button id="detailQtyMinus">−</button>
+                <span id="detailQty">1</span>
+                <button id="detailQtyPlus">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="detail-footer">
+        <button class="add-to-cart-btn" id="detailAddBtn">
+          <span>افزودن به سبد</span>
+          <span id="detailTotal">۰ تومان</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ORDER TRACKING DRAWER -->
+    <div class="drawer" id="trackDrawer">
+      <div class="drawer-header">
+        <div class="title"><div><h2>پیگیری سفارش</h2><div class="sub" style="color:var(--text-dim); font-weight:500;">میز ۱۲</div></div></div>
+        <button class="close-btn" data-close="trackDrawer">✕</button>
+      </div>
+      <div class="track-body">
+        <div class="track-order-id">سفارش #۱۴۵</div>
+        <div class="track-eta" id="etaText">در حال ثبت سفارش…</div>
+        <div class="timeline" id="timeline">
+          <div class="t-step" data-step="0"><div class="t-line"></div><div class="t-dot">✓</div>
+            <div class="t-text"><div class="t-title">سفارش ثبت شد</div><div class="t-time">—</div></div></div>
+          <div class="t-step" data-step="1"><div class="t-line"></div><div class="t-dot">🔥</div>
+            <div class="t-text"><div class="t-title">در حال آماده‌سازی</div><div class="t-time">—</div></div></div>
+          <div class="t-step" data-step="2"><div class="t-line"></div><div class="t-dot">🍽️</div>
+            <div class="t-text"><div class="t-title">آماده است</div><div class="t-time">—</div></div></div>
+          <div class="t-step" data-step="3"><div class="t-line"></div><div class="t-dot">✓</div>
+            <div class="t-text"><div class="t-title">سرو شد</div><div class="t-time">—</div></div></div>
+        </div>
+        <div class="track-actions">
+          <button id="waiterBtn">🙋 درخواست گارسون</button>
+          <button id="billBtn">🧾 درخواست صورتحساب</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+<script>
+/* ---------- helpers ---------- */
+function fa(n){ const m=['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹']; return String(n).split('').map(d=>m[d]??d).join(''); }
+function money(n){ return fa(Math.round(n).toLocaleString('en-US')) + ' تومان'; }
+
+let toastTimer;
+function showToast(text){
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function toggle(id){ document.getElementById(id).classList.toggle('open'); }
+function closeAll(){ document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open')); }
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => toggle(btn.dataset.close));
+});
+document.getElementById('openChat').addEventListener('click', () => toggle('chatDrawer'));
+document.getElementById('openCart').addEventListener('click', () => { renderCart(); toggle('cartDrawer'); });
+
+/* ---------- product catalog ---------- */
+const PRODUCTS = {
+  burger: { name:'برگر بازار', emoji:'🍔', desc:'گوشت گوساله، پنیر چدار، سس مخصوص، نان برشته', basePrice:285000,
+    variants:[{id:'reg',label:'معمولی',delta:0},{id:'double',label:'دوبل',delta:65000}],
+    options:[{id:'no_onion',label:'بدون پیاز',delta:0},{id:'extra_cheese',label:'پنیر اضافه',delta:25000},{id:'extra_sauce',label:'سس اضافه',delta:10000}] },
+  ghomeh: { name:'خورش قیمه بادمجان', emoji:'🍲', desc:'با برنج ایرانی و سالاد شیرازی', basePrice:190000,
+    variants:[{id:'reg',label:'یک نفره',delta:0},{id:'large',label:'دو نفره',delta:140000}],
+    options:[{id:'extra_rice',label:'برنج اضافه',delta:30000},{id:'no_salad',label:'بدون سالاد',delta:0}] },
+  soda: { name:'نوشابه قوطی', emoji:'🥤', desc:'کوکاکولا، فانتا، اسپرایت', basePrice:35000,
+    variants:[{id:'coke',label:'کوکاکولا',delta:0},{id:'fanta',label:'فانتا',delta:0},{id:'sprite',label:'اسپرایت',delta:0}], options:[] },
+  doogh: { name:'دوغ خانگی', emoji:'🍹', desc:'با نعنا و پونه تازه', basePrice:45000,
+    variants:[{id:'reg',label:'لیوان معمولی',delta:0}], options:[{id:'extra_mint',label:'نعنای اضافه',delta:0}] }
+};
+
+/* ---------- category rail ---------- */
+document.querySelectorAll('.pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    const cat = pill.dataset.cat;
+    document.querySelectorAll('.cat-section').forEach(sec => {
+      sec.style.display = sec.dataset.cat === cat ? '' : 'none';
+    });
+    document.getElementById('menuScroll').scrollTop = 0;
+  });
+});
+
+/* ---------- cart state ---------- */
+let cart = [];
+
+function addLine(productId, variantId, optionIds, qty){
+  const p = PRODUCTS[productId];
+  const variant = p.variants.find(v => v.id === variantId) || p.variants[0];
+  const options = p.options.filter(o => optionIds.includes(o.id));
+  const unitPrice = p.basePrice + (variant ? variant.delta : 0) + options.reduce((s,o)=>s+o.delta,0);
+  cart.push({
+    lineId: 'l' + Date.now() + Math.random().toString(16).slice(2),
+    productId, emoji: p.emoji, name: p.name,
+    variantLabel: variant ? variant.label : null,
+    optionLabels: options.map(o => o.label),
+    qty, unitPrice
+  });
+  bumpCartBadge();
+  updateCartCount();
+}
+
+function quickAdd(productId){
+  addLine(productId, PRODUCTS[productId].variants[0].id, [], 1);
+  showToast(PRODUCTS[productId].name + ' به سبد اضافه شد');
+}
+
+document.querySelectorAll('[data-quick-add]').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    quickAdd(btn.dataset.quickAdd);
+    btn.classList.add('added');
+    btn.textContent = '✓';
+    setTimeout(() => { btn.classList.remove('added'); btn.textContent = '+'; }, 900);
+  });
+});
+
+document.querySelectorAll('.product-card').forEach(card => {
+  card.addEventListener('click', () => openDetail(card.dataset.product));
+});
+
+function updateCartCount(){
+  const count = cart.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('cartCount').textContent = fa(count);
+}
+function bumpCartBadge(){
+  const el = document.getElementById('cartCount');
+  el.classList.add('bump');
+  setTimeout(() => el.classList.remove('bump'), 200);
+}
+
+function cartSubtotal(){ return cart.reduce((s,i)=>s+i.qty*i.unitPrice,0); }
+
+function renderCart(){
+  const body = document.getElementById('cartBody');
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  if(cart.length === 0){
+    body.innerHTML = '<div class="cart-empty">سبد شما خالیه 🍽️<br>از منو یا از پاسخیار سفارش اضافه کنید</div>';
+    checkoutBtn.disabled = true;
+  } else {
+    body.innerHTML = cart.map(item => {
+      const variantText = [item.variantLabel, ...item.optionLabels].filter(Boolean).join(' · ');
+      return `
+        <div class="cart-item" data-line="${item.lineId}">
+          <div class="thumb">${item.emoji}</div>
+          <div class="info">
+            <div class="name">${item.name}</div>
+            <div class="variant">${variantText || '—'}</div>
+          </div>
+          <div class="qty-control">
+            <button data-minus="${item.lineId}">−</button>
+            <span>${fa(item.qty)}</span>
+            <button data-plus="${item.lineId}">+</button>
+          </div>
+        </div>`;
+    }).join('');
+    checkoutBtn.disabled = false;
+
+    body.querySelectorAll('[data-plus]').forEach(b => b.addEventListener('click', () => changeQty(b.dataset.plus, 1)));
+    body.querySelectorAll('[data-minus]').forEach(b => b.addEventListener('click', () => changeQty(b.dataset.minus, -1)));
+  }
+
+  const sub = cartSubtotal();
+  const tax = sub * 0.1;
+  document.getElementById('cartSubtotal').textContent = money(sub);
+  document.getElementById('cartTax').textContent = money(tax);
+  document.getElementById('cartTotal').textContent = money(sub + tax);
+}
+
+function changeQty(lineId, delta){
+  const line = cart.find(i => i.lineId === lineId);
+  if(!line) return;
+  line.qty += delta;
+  if(line.qty <= 0) cart = cart.filter(i => i.lineId !== lineId);
+  updateCartCount();
+  renderCart();
+}
+
+/* ---------- product detail sheet ---------- */
+let detailState = { productId:null, variant:null, options:new Set(), qty:1 };
+
+function openDetail(id){
+  const p = PRODUCTS[id];
+  detailState = { productId:id, variant:p.variants[0].id, options:new Set(), qty:1 };
+  document.getElementById('detailHero').textContent = p.emoji;
+  document.getElementById('detailName').textContent = p.name;
+  document.getElementById('detailDesc').textContent = p.desc;
+  renderVariants(); renderOptions(); renderDetailTotal();
+  closeAll();
+  toggle('detailDrawer');
+}
+
+function renderVariants(){
+  const p = PRODUCTS[detailState.productId];
+  const el = document.getElementById('variantList'); el.innerHTML = '';
+  p.variants.forEach(v => {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'opt-row' + (detailState.variant === v.id ? ' selected' : '');
+    row.innerHTML = `<span class="opt-left"><span class="radio-dot"></span><span>${v.label}</span></span>
+      <span class="opt-price">${v.delta > 0 ? '+' + money(v.delta) : 'رایگان'}</span>`;
+    row.addEventListener('click', () => { detailState.variant = v.id; renderVariants(); renderDetailTotal(); });
+    el.appendChild(row);
+  });
+}
+
+function renderOptions(){
+  const p = PRODUCTS[detailState.productId];
+  const el = document.getElementById('optionList'); el.innerHTML = '';
+  if(p.options.length === 0){ el.innerHTML = '<div style="font-size:12.5px; color:var(--text-dim);">افزودنی‌ای موجود نیست</div>'; return; }
+  p.options.forEach(o => {
+    const sel = detailState.options.has(o.id);
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'opt-row' + (sel ? ' selected' : '');
+    row.innerHTML = `<span class="opt-left"><span class="check-box"></span><span>${o.label}</span></span>
+      <span class="opt-price">${o.delta > 0 ? '+' + money(o.delta) : 'رایگان'}</span>`;
+    row.addEventListener('click', () => {
+      sel ? detailState.options.delete(o.id) : detailState.options.add(o.id);
+      renderOptions(); renderDetailTotal();
+    });
+    el.appendChild(row);
+  });
+}
+
+document.getElementById('detailQtyMinus').addEventListener('click', () => changeDetailQty(-1));
+document.getElementById('detailQtyPlus').addEventListener('click', () => changeDetailQty(1));
+function changeDetailQty(delta){
+  detailState.qty = Math.max(1, detailState.qty + delta);
+  document.getElementById('detailQty').textContent = fa(detailState.qty);
+  renderDetailTotal();
+}
+
+function renderDetailTotal(){
+  const p = PRODUCTS[detailState.productId];
+  let total = p.basePrice;
+  const v = p.variants.find(v => v.id === detailState.variant);
+  if(v) total += v.delta;
+  p.options.forEach(o => { if(detailState.options.has(o.id)) total += o.delta; });
+  total *= detailState.qty;
+  document.getElementById('detailTotal').textContent = money(total);
+}
+
+document.getElementById('detailAddBtn').addEventListener('click', () => {
+  addLine(detailState.productId, detailState.variant, Array.from(detailState.options), detailState.qty);
+  showToast(PRODUCTS[detailState.productId].name + ' به سبد اضافه شد');
+  toggle('detailDrawer');
+});
+
+/* ---------- chat ---------- */
+const chatBody = document.getElementById('chatInput') && document.getElementById('chatBody');
+const AGENT_REPLIES = [
+  'حتماً! الان برات انجامش می‌دم 🙌',
+  'باشه، اضافه شد به سبدتون. چیز دیگه‌ای هم میل دارید؟',
+  'متوجه شدم، الان بررسی می‌کنم و بهتون خبر می‌دم.',
+  'پیشنهاد می‌کنم دوغ خانگی رو هم امتحان کنید، خیلی خوب میاد 😊'
+];
+function appendMsg(text, who){
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  div.textContent = text;
+  document.getElementById('chatBody').appendChild(div);
+  document.getElementById('chatBody').scrollTop = 999999;
+}
+function sendChat(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  appendMsg(text, 'user');
+  input.value = '';
+
+  const typing = document.createElement('div');
+  typing.className = 'typing';
+  typing.id = 'typingIndicator';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  document.getElementById('chatBody').appendChild(typing);
+  document.getElementById('chatBody').scrollTop = 999999;
+
+  setTimeout(() => {
+    typing.remove();
+    appendMsg(AGENT_REPLIES[Math.floor(Math.random() * AGENT_REPLIES.length)], 'agent');
+  }, 1100);
+}
+document.getElementById('sendBtn').addEventListener('click', sendChat);
+document.getElementById('chatInput').addEventListener('keydown', e => { if(e.key === 'Enter') sendChat(); });
+
+document.getElementById('voiceBtn').addEventListener('click', function(){
+  this.classList.add('listening');
+  showToast('🎙️ در حال شنیدن...');
+  setTimeout(() => {
+    this.classList.remove('listening');
+    document.getElementById('chatInput').value = 'یه برگر برام بذار';
+  }, 1600);
+});
+
+/* ---------- checkout -> tracking ---------- */
+document.getElementById('checkoutBtn').addEventListener('click', () => {
+  if(cart.length === 0) return;
+  closeAll();
+  toggle('trackDrawer');
+  startTrackingDemo();
+});
+
+function startTrackingDemo(){
+  const steps = document.querySelectorAll('#timeline .t-step');
+  steps.forEach(s => { s.classList.remove('done','active'); s.querySelector('.t-time').textContent = '—'; });
+  steps[0].classList.add('done');
+  steps[0].querySelector('.t-time').textContent = new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
+  steps[1].classList.add('active');
+  document.getElementById('etaText').textContent = 'در حال آماده‌سازی — حدود ۱۸ دقیقه';
+
+  let current = 1;
+  clearInterval(window._trackTimer);
+  window._trackTimer = setInterval(() => {
+    if(current >= steps.length - 1){ clearInterval(window._trackTimer); return; }
+    steps[current].classList.remove('active');
+    steps[current].classList.add('done');
+    current++;
+    steps[current].classList.add('active');
+    steps[current].querySelector('.t-time').textContent = 'همین الان';
+    if(current === 2) document.getElementById('etaText').textContent = 'آماده است 🎉';
+    if(current === 3){ document.getElementById('etaText').textContent = 'نوش جان! 🌿'; steps[3].classList.remove('active'); steps[3].classList.add('done'); clearInterval(window._trackTimer); }
+  }, 3500);
+}
+
+document.getElementById('waiterBtn').addEventListener('click', function(){
+  this.classList.add('done'); this.textContent = '✓ گارسون خبر شد';
+  showToast('گارسون در راهه');
+});
+document.getElementById('billBtn').addEventListener('click', function(){
+  this.classList.add('done'); this.textContent = '✓ صورتحساب درخواست شد';
+  showToast('صورتحساب آماده می‌شود');
+});
+
+/* ---------- seed demo cart ---------- */
+addLine('burger', 'reg', ['no_onion'], 1);
+addLine('soda', 'coke', [], 2);
+addLine('doogh', 'reg', [], 1);
+</script>
+
+</body>
+</html>
+ 
+
+
+
+
+
